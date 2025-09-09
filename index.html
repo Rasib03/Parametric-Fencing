@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Runway Surveillance Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #F7F9FC; /* Light neutral for corporate feel */
+            color: #003087; /* Corporate blue */
+            font-family: 'Open Sans', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .header {
+            background: linear-gradient(90deg, #003087, #4B5EAA);
+            color: #FFFFFF;
+            padding: 16px 32px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .header h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        .sidebar {
+            background: #FFFFFF;
+            border-right: 1px solid #E0E6ED;
+            padding: 24px;
+            height: calc(100vh - 64px);
+            position: sticky;
+            top: 64px;
+        }
+        .main-content {
+            padding: 32px;
+        }
+        .card {
+            background: #FFFFFF;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+        }
+        .alert {
+            background: #FFFFFF;
+            border: 1px solid #F5A623; /* Amber */
+            color: #F5A623;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            background: #FFFFFF;
+            border: 1px solid #E0E6ED;
+            color: #003087;
+            font-family: 'Montserrat', sans-serif;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background: #F7F9FC;
+        }
+        .btn-primary {
+            background: #003087;
+            border: none;
+            color: #FFFFFF;
+        }
+        .btn-primary:hover {
+            background: #00205B;
+            box-shadow: 0 4px 12px rgba(0, 48, 135, 0.3);
+        }
+        .btn-success {
+            background: #F5A623;
+            border: none;
+            color: #FFFFFF;
+        }
+        .btn-success:hover {
+            background: #D97706;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        .btn-danger {
+            background: #D32F2F;
+            border: none;
+            color: #FFFFFF;
+        }
+        .btn-danger:hover {
+            background: #B71C1C;
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+        }
+        .btn-info {
+            background: #4B5EAA;
+            border: none;
+            color: #FFFFFF;
+        }
+        .btn-info:hover {
+            background: #3B4A87;
+            box-shadow: 0 4px 12px rgba(75, 94, 170, 0.3);
+        }
+        .video-feed {
+            position: relative;
+            text-align: center;
+        }
+        .video-feed img {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .fps-overlay {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #F5A623;
+            color: #F5A623;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: 'Montserrat', sans-serif;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+        .modal-header, .modal-footer {
+            border: none;
+        }
+        .roi-image-container {
+            position: relative;
+            display: inline-block;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(0, 48, 135, 0.05),
+                rgba(0, 48, 135, 0.05) 10px,
+                transparent 10px,
+                transparent 20px
+            );
+            border-radius: 8px;
+        }
+        #roiCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .form-control, .form-select {
+            background: #FFFFFF;
+            border: 1px solid #E0E6ED;
+            color: #003087;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 6px rgba(0, 48, 135, 0.3);
+            border-color: #003087;
+        }
+        .form-label {
+            color: #003087;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .chart-container {
+            background: #FFFFFF;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 16px;
+        }
+        /* Added spacing for Controls section */
+        .controls-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #E0E6ED;
+        }
+        .controls-section h5 {
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #F5A623;
+            color: #003087;
+        }
+        .control-button {
+            margin-bottom: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container-fluid">
+            <h1><i class="fas fa-plane me-2"></i>Runway Surveillance Dashboard</h1>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="controls-section">
+                    <h5>Controls</h5>
+                    <form method="POST" action="{{ url_for('capture_image') }}" class="control-button">
+                        <button type="submit" class="btn btn-warning w-100"><i class="fas fa-camera me-2"></i>Capture Image</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('toggle_detection') }}" class="control-button">
+                        <button type="submit" class="btn btn-primary w-100"><i class="fas {{ 'fa-pause' if detection_active else 'fa-play' }} me-2"></i>{{ 'Stop' if detection_active else 'Start' }}</button>
+                    </form>
+                    <button class="btn btn-success w-100 control-button" data-bs-toggle="modal" data-bs-target="#roiModal"><i class="fas fa-draw-polygon me-2"></i>Define ROI</button>
+                    <a href="{{ url_for('clear_roi') }}" class="btn btn-danger w-100 control-button"><i class="fas fa-trash me-2"></i>Clear ROI</a>
+                    <a href="{{ url_for('anomalies') }}" class="btn btn-info w-100 control-button"><i class="fas fa-exclamation-circle me-2"></i>Anomalies</a>
+                </div>
+                <div class="controls-section">
+                    <h5>Configuration</h5>
+                    <form method="POST" action="{{ url_for('update_settings') }}" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="min_confidence" class="form-label">Confidence Threshold:</label>
+                            <input type="number" step="0.1" min="0.1" max="0.9" name="min_confidence" value="{{ min_confidence }}" class="form-control" id="min_confidence">
+                        </div>
+                        <div class="mb-3">
+                            <label for="camera_index" class="form-label">Camera Index:</label>
+                            <select name="camera_index" class="form-select" id="camera_index">
+                                {% for index in [0] %}
+                                <option value="{{ index }}" {% if index == camera_index %}selected{% endif %}>{{ index }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="file" class="form-label">ROI Image:</label>
+                            <input type="file" name="file" accept="image/*" class="form-control" id="file">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100"><i class="fas fa-save me-2"></i>Save</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="alert mb-4">
+                    Status: {{ status }} | Intrusions: {{ intrusion_count }} | Alerts: {{ alert_count }}
+                </div>
+                <div class="row mb-4">
+                    <div class="col-12 col-lg-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-video me-2"></i>Live Feed</h5>
+                                <div class="video-feed">
+                                    <img src="{{ url_for('video_feed') }}" alt="Live Feed" class="img-fluid">
+                                    <div class="fps-overlay" id="fpsDisplay">FPS: --</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <div class="card chart-container">
+                            <div class="card-body">
+                                <H3>TO BE ADDED SOON!</H3>
+                                <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Alert Trends</h5>
+                                <canvas id="alertChart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-image me-2"></i>Recent Anomalies</h5>
+                        <div class="row">
+                            {% for screenshot in screenshots %}
+                            <div class="col-6 col-md-4 col-lg-3 mb-3">
+                                <div class="card screenshot h-100">
+                                    <img src="{{ url_for('download_anomaly', filename=screenshot[0]) }}" class="card-img-top" alt="Anomaly">
+                                    <div class="card-body text-center">
+                                        <p class="card-text">{{ screenshot[1] }}<br>{{ screenshot[2] }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROI Modal -->
+    <div class="modal fade" id="roiModal" tabindex="-1" aria-labelledby="roiModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="roiModalLabel"><i class="fas fa-draw-polygon me-2"></i>Region of Interest</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Draw ROI with auto-closure on release. Use Undo or Clear for precision.</p>
+                    <div class="roi-image-container">
+                        <img id="roiImage" src="data:image/jpeg;base64,{{ roi_image }}" width="640" height="480" class="img-fluid">
+                        <canvas id="roiCanvas" width="640" height="480"></canvas>
+                    </div>
+                    <div class="mt-3">
+                        <button class="btn btn-info me-2" onclick="undoPoint()"><i class="fas fa-undo me-2"></i>Undo</button>
+                        <button class="btn btn-danger" onclick="clearPoints()"><i class="fas fa-eraser me-2"></i>Clear</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="saveROI()"><i class="fas fa-save me-2"></i>Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="cancelDrawing()"><i class="fas fa-times me-2"></i>Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script>
+        let drawing = false;
+        let points = [];
+        let canvas, ctx;
+
+        // FPS Update (simulated)
+        function updateFPS() {
+            const fpsDisplay = document.getElementById('fpsDisplay');
+            setInterval(() => {
+                fpsDisplay.textContent = `FPS: ${Math.random() * 30 | 0}`; // Placeholder
+            }, 1000);
+        }
+
+        // Placeholder Chart:
+
+        function initChart() {
+            const ctx = document.getElementById('alertChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Alerts',
+                        data: [5, 10, 8, 15, 12, 20],
+                        borderColor: '#F5A623',
+                        backgroundColor: 'rgba(245, 166, 35, 0.2)',
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function startDrawing() {
+            canvas = document.getElementById('roiCanvas');
+            ctx = canvas.getContext('2d');
+            points = [];
+            draw();
+        }
+
+        function handleMouseDown(e) {
+            if (!drawing) {
+                drawing = true;
+                const rect = canvas.getBoundingClientRect();
+                points.push({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                draw();
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (drawing) {
+                const rect = canvas.getBoundingClientRect();
+                points.push({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                draw();
+            }
+        }
+
+        function handleMouseUp() {
+            if (drawing && points.length > 2) {
+                points.push(points[0]); // Auto-complete
+                draw();
+            }
+            drawing = false;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            ctx.fillStyle = 'rgba(0, 48, 135, 0.2)';
+            ctx.strokeStyle = '#003087';
+            ctx.lineWidth = 2;
+            if (points.length > 0) {
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+                if (points.length > 2 && !drawing && points[points.length - 1].x === points[0].x && points[points.length - 1].y === points[0].y) {
+                    ctx.closePath();
+                }
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        function undoPoint() {
+            if (points.length > 0) {
+                points.pop();
+                if (points.length > 0 && points[points.length - 1].x === points[0].x && points[points.length - 1].y === points[0].y) {
+                    points.pop();
+                }
+                draw();
+            }
+        }
+
+        function clearPoints() {
+            points = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function saveROI() {
+            if (points.length < 4) {
+                alert('Please define a valid ROI with at least 3 points');
+                return;
+            }
+            const savePoints = points.slice(0, -1);
+            fetch('{{ url_for('save_roi') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ points: savePoints })
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to save ROI');
+                }
+            });
+        }
+
+        function cancelDrawing()     {
+            points = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        document.getElementById('roiModal').addEventListener('shown.bs.modal', () => {
+            startDrawing();
+            canvas.addEventListener('mousedown', handleMouseDown);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+        });
+
+        document.getElementById('roiModal').addEventListener('hidden.bs.modal', () => {
+            canvas.removeEventListener('mousedown', handleMouseDown);
+            canvas.removeEventListener('mousemove', handleMouseMove);
+            canvas.removeEventListener('mouseup', handleMouseUp);
+            cancelDrawing();
+        });
+
+        updateFPS();
+        initChart();
+    </script>
+</body>
+</html>
